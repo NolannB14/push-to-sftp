@@ -1,22 +1,29 @@
-const core = require('@actions/core')
-const Client = require('ssh2-sftp-client')
+const core = require("@actions/core");
+const Client = require("ssh2-sftp-client");
 
-const host = core.getInput('host')
-const port = core.getInput('port')
-const username = core.getInput('username')
-const password = core.getInput('password')
-const sourceDir = core.getInput('sourceDir')
-const targetDir = core.getInput('targetDir')
-const privateKey = core.getInput('privateKey')
-const passphrase = core.getInput('passphrase')
+const host = core.getInput("host");
+const port = core.getInput("port");
+const username = core.getInput("username");
+const password = core.getInput("password");
+const sourceDir = core.getInput("sourceDir");
+const targetDir = core.getInput("targetDir");
+const privateKey = core.getInput("privateKey");
+const passphrase = core.getInput("passphrase");
 
-core.info(`connecting to ${username}@${host}:${port}...`)
+core.info(`connecting to ${username}@${host}:${port}...`);
 
-let sftp = new Client()
+const sortDirectoryUpload = (path, isDirectory) => {
+  if (path.includes("node_modules") || path.includes(".git")) {
+    return false;
+  }
+  return true;
+};
 
-sftp.on('upload', ({ source, destination }) => {
-  core.info(`uploaded ${source} to ${destination}`)
-})
+let sftp = new Client();
+
+sftp.on("upload", ({ source, destination }) => {
+  core.info(`uploaded ${source} to ${destination}`);
+});
 
 sftp
   .connect({
@@ -30,16 +37,16 @@ sftp
     retries: 5,
   })
   .then(() => {
-    core.info(`connected \n uploading ${sourceDir} to ${targetDir}...`)
-    return sftp.uploadDir(sourceDir, targetDir)
+    core.info(`connected \n uploading ${sourceDir} to ${targetDir}...`);
+    return sftp.uploadDir(sourceDir, targetDir, sortDirectoryUpload);
   })
   .then(() => {
-    core.info(`successfully uploaded ${sourceDir} to ${targetDir} 🎉`)
+    core.info(`successfully uploaded ${sourceDir} to ${targetDir} 🎉`);
   })
   .catch((error) => {
-    core.setFailed(error.message)
+    core.setFailed(error.message);
   })
   .finally(() => {
-    core.info('ending SFTP session')
-    sftp.end()
-  })
+    core.info("ending SFTP session");
+    sftp.end();
+  });
