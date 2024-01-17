@@ -38,7 +38,9 @@ sftp
   })
   .then(() => {
     core.info(`connected \n uploading ${sourceDir} to ${targetDir}...`);
-    return sftp.uploadDir(sourceDir, targetDir, sortDirectoryUpload);
+    return sftp.uploadDir(sourceDir, targetDir, {
+      filter: sortDirectoryUpload,
+    });
   })
   .then(() => {
     core.info(`successfully uploaded ${sourceDir} to ${targetDir} 🎉`);
