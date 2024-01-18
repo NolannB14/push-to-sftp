@@ -1,5 +1,6 @@
 const core = require("@actions/core");
 const Client = require("ssh2-sftp-client");
+const fs = require("fs").promises;
 
 const host = core.getInput("host");
 const port = core.getInput("port");
@@ -45,7 +46,11 @@ class SFTPClient {
       const files = localFiles.split("\n");
       for (const file of files) {
         core.info(`Uploading ${file} ...`);
-        await this.client.put(file, file);
+        try {
+          await this.client.uploadDir(file, file);
+        } catch (err) {
+          await this.client.put(file, file);
+        }
       }
     } catch (err) {
       console.error("Uploading failed:", err);
