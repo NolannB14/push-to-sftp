@@ -41,15 +41,15 @@ class SFTPClient {
 
   async uploadFilesList(localFiles) {
     core.info(`Uploading ${localFiles}`);
-    // try {
-    //   const files = JSON.parse(localFiles);
-    //   for (const file of files) {
-    //     core.info(`Uploading ${file} ...`);
-    //     await this.client.put(file, file);
-    //   }
-    // } catch (err) {
-    //   console.error("Uploading failed:", err);
-    // }
+    try {
+      const files = localFiles.split("\n");
+      for (const file of files) {
+        core.info(`Uploading ${file} ...`);
+        await this.client.put(file, file);
+      }
+    } catch (err) {
+      console.error("Uploading failed:", err);
+    }
   }
 }
 
