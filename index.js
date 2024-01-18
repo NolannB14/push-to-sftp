@@ -10,45 +10,56 @@ const targetDir = core.getInput("targetDir");
 const privateKey = core.getInput("privateKey");
 const passphrase = core.getInput("passphrase");
 
-core.info(`connecting to ${username}@${host}:${port}...`);
+core.info(`connecting to ${username}@${host}:${port}`);
 
-const sortDirectoryUpload = (path, isDirectory) => {
-  if (path.includes("node_modules") || path.includes(".git")) {
-    return false;
+class SFTPClient {
+  constructor() {
+    this.client = new Client();
   }
-  return true;
-};
 
-let sftp = new Client();
+  async connect(options) {
+    core.info(`Connecting to ${options.host}:${options.port}`);
+    try {
+      await this.client.connect(options);
+    } catch (err) {
+      core.info("Failed to connect:", err);
+    }
+  }
 
-sftp.on("upload", ({ source, destination }) => {
-  core.info(`uploaded ${source} to ${destination}`);
-});
+  async disconnect() {
+    await this.client.end();
+  }
 
-sftp
-  .connect({
-    host,
-    port,
-    username,
-    password,
-    privateKey,
-    passphrase,
-    readyTimeout: 5000,
-    retries: 5,
-  })
-  .then(() => {
-    core.info(`connected \n uploading ${sourceDir} to ${targetDir}...`);
-    return sftp.uploadDir(sourceDir, targetDir, {
-      filter: sortDirectoryUpload,
-    });
-  })
-  .then(() => {
-    core.info(`successfully uploaded ${sourceDir} to ${targetDir} 🎉`);
-  })
-  .catch((error) => {
-    core.setFailed(error.message);
-  })
-  .finally(() => {
-    core.info("ending SFTP session");
-    sftp.end();
-  });
+  async uploadFile(localFile, remoteFile) {
+    core.info(`Uploading ${localFile} to ${remoteFile} ...`);
+    try {
+      await this.client.put(localFile, remoteFile);
+    } catch (err) {
+      console.error("Uploading failed:", err);
+    }
+  }
+
+  async uploadFilesList(localFiles) {
+    try {
+      const files = JSON.parse(localFiles);
+      for (const file of files) {
+        core.info(`Uploading ${file} ...`);
+        await this.client.put(file, file);
+      }
+    } catch (err) {
+      console.error("Uploading failed:", err);
+    }
+  }
+}
+
+(async () => {
+  //* Open the connection
+  const client = new SFTPClient();
+  await client.connect({ host, port, username, password });
+
+  //* Upload local files to remote file
+  await client.uploadFilesList(sourceDir);
+
+  //* Close the connection
+  await client.disconnect();
+})();
