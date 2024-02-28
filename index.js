@@ -47,9 +47,9 @@ class SFTPClient {
       for (const file of files) {
         core.info(`Uploading ${file} ...`);
         try {
-          await this.client.uploadDir(file, file);
+          await this.client.uploadDir(file, targetDir + file);
         } catch (err) {
-          await this.client.put(file, file);
+          await this.client.put(file, targetDir + file);
         }
       }
     } catch (err) {
