@@ -3,21 +3,14 @@ const Client = require("ssh2-sftp-client");
 const path = require("path");
 const fs = require("fs").promises;
 
-// const host = core.getInput("host");
-// const port = core.getInput("port");
-// const username = core.getInput("username");
-// const password = core.getInput("password");
-// const sourceDir = core.getInput("sourceDir");
-// const targetDir = core.getInput("targetDir");
+const host = core.getInput("host");
+const port = core.getInput("port");
+const username = core.getInput("username");
+const password = core.getInput("password");
+const sourceDir = core.getInput("sourceDir");
+const targetDir = core.getInput("targetDir");
 // const privateKey = core.getInput("privateKey");
 // const passphrase = core.getInput("passphrase");
-
-const host = "51.178.40.103";
-const port = 3100;
-const username = "octe_app";
-const password = "Password1230!";
-const sourceDir = ".next\nnext.config.js";
-const targetDir = "OCTELift/";
 
 core.info(`connecting to ${username}@${host}:${port}`);
 
