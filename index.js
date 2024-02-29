@@ -1,15 +1,23 @@
 const core = require("@actions/core");
 const Client = require("ssh2-sftp-client");
+const path = require("path");
 const fs = require("fs").promises;
 
-const host = core.getInput("host");
-const port = core.getInput("port");
-const username = core.getInput("username");
-const password = core.getInput("password");
-const sourceDir = core.getInput("sourceDir");
-const targetDir = core.getInput("targetDir");
-const privateKey = core.getInput("privateKey");
-const passphrase = core.getInput("passphrase");
+// const host = core.getInput("host");
+// const port = core.getInput("port");
+// const username = core.getInput("username");
+// const password = core.getInput("password");
+// const sourceDir = core.getInput("sourceDir");
+// const targetDir = core.getInput("targetDir");
+// const privateKey = core.getInput("privateKey");
+// const passphrase = core.getInput("passphrase");
+
+const host = "51.178.40.103";
+const port = 3100;
+const username = "octe_app";
+const password = "Password1230!";
+const sourceDir = ".next\nnext.config.js";
+const targetDir = "OCTELift/";
 
 core.info(`connecting to ${username}@${host}:${port}`);
 
@@ -31,29 +39,30 @@ class SFTPClient {
     await this.client.end();
   }
 
-  async uploadFile(localFile, remoteFile) {
-    core.info(`Uploading ${localFile} to ${remoteFile} ...`);
-    try {
-      await this.client.put(localFile, remoteFile);
-    } catch (err) {
-      console.error("Uploading failed:", err);
-    }
-  }
+  async uploadFilesAndDirectories(localPath, remotePath) {
+    const stats = await fs.lstat(localPath);
 
-  async uploadFilesList(localFiles) {
-    core.info(`Uploading ${localFiles}`);
-    try {
-      const files = localFiles.split("\n");
-      for (const file of files) {
-        core.info(`Uploading ${file} ...`);
-        try {
-          await this.client.uploadDir(file, file);
-        } catch (err) {
-          await this.client.put(file, file);
+    if (stats.isDirectory()) {
+      const items = await fs.readdir(localPath);
+      for (const item of items) {
+        await this.uploadFilesAndDirectories(
+          path.join(localPath, item),
+          path.join(remotePath, item)
+        );
+      }
+    } else {
+      remotePath = remotePath.replaceAll("\\", "/");
+      const remoteDir = path.dirname(remotePath);
+      try {
+        await this.client.mkdir(remoteDir, true);
+      } catch (mkdirError) {
+        if (mkdirError.code !== 4) {
+          throw mkdirError;
         }
       }
-    } catch (err) {
-      console.error("Uploading failed:", err);
+      const fileContents = await fs.readFile(localPath);
+      await this.client.put(Buffer.from(fileContents), remotePath);
+      console.log(`Uploaded file: ${localPath}`);
     }
   }
 }
@@ -64,8 +73,13 @@ class SFTPClient {
   await client.connect({ host, port, username, password });
 
   //* Upload local files to remote file
-  await client.uploadFilesList(sourceDir);
+  const filesArray = sourceDir.split("\n");
+  for (const item of filesArray) {
+    const localPath = path.resolve(__dirname, item);
+    const remotePath = `${targetDir}/${item}`;
 
+    await client.uploadFilesAndDirectories(localPath, remotePath);
+  }
   //* Close the connection
   await client.disconnect();
 })();
