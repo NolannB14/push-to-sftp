@@ -42,18 +42,22 @@ class SFTPClient {
 
   async uploadFilesList(localFiles) {
     core.info(`Uploading ${localFiles}`);
-    try {
-      const files = localFiles.split("\n");
-      for (const file of files) {
-        core.info(`Uploading ${file} ...`);
-        try {
-          await this.client.uploadDir(file, targetDir + file);
-        } catch (err) {
+    const files = localFiles.split("\n");
+    for (const file of files) {
+      core.info(`Uploading ${file} ...`);
+      fs.stat(path, async (err, stats) => {
+        if (err) {
+          throw err;
+        }
+
+        if (stats.isFile()) {
           await this.client.put(file, targetDir + file);
         }
-      }
-    } catch (err) {
-      console.error("Uploading failed:", err);
+
+        if (stats.isDirectory()) {
+          await this.client.uploadDir(file, targetDir + file);
+        }
+      });
     }
   }
 }
