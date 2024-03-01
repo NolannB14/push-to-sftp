@@ -33,6 +33,7 @@ class SFTPClient {
   }
 
   async uploadFilesAndDirectories(localPath, remotePath) {
+    console.log(`Uploading ${localPath} to ${remotePath}`);
     const stats = await fs.lstat(localPath);
 
     if (stats.isDirectory()) {
@@ -68,10 +69,8 @@ class SFTPClient {
   //* Upload local files to remote file
   const filesArray = sourceDir.split("\n");
   for (const item of filesArray) {
-    const localPath = path.resolve(__dirname, item);
     const remotePath = `${targetDir}/${item}`;
-
-    await client.uploadFilesAndDirectories(localPath, remotePath);
+    await client.uploadFilesAndDirectories("./" + item, remotePath);
   }
   //* Close the connection
   await client.disconnect();
