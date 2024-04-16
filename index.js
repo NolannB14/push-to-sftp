@@ -9,6 +9,7 @@ const username = core.getInput("username");
 const password = core.getInput("password");
 const sourceDir = core.getInput("sourceDir");
 const targetDir = core.getInput("targetDir");
+const workingDir = core.getInput("workingDir") ?? "./";
 // const privateKey = core.getInput("privateKey");
 // const passphrase = core.getInput("passphrase");
 
@@ -70,7 +71,7 @@ class SFTPClient {
   const filesArray = sourceDir.split("\n");
   for (const item of filesArray) {
     const remotePath = `${targetDir}/${item}`;
-    await client.uploadFilesAndDirectories("./" + item, remotePath);
+    await client.uploadFilesAndDirectories(workingDir + item, remotePath);
   }
   //* Close the connection
   await client.disconnect();
